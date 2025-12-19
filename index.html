@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表示テスト - beforeunload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .comparison {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .column {
+            flex: 1;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .editable {
+            width: 100%;
+            min-height: 44px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .editable:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .editable:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .comparison {
+                flex-direction: column;
+                gap: 30px;
+            }
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.active {
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .links-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .links-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        a {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        a:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .reset-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>表示テスト</h1>
+
+        <div class="comparison">
+            <div class="column">
+                <h2>フォーム版</h2>
+                <div class="form-section">
+                    <label for="formInput">編集可能テキスト</label>
+                    <input type="text" id="formInput" placeholder="入力してください">
+                    <div class="status" id="formStatus">⚠️ 未保存の入力があります</div>
+                </div>
+                <button class="reset-btn" onclick="resetForm()">リセット</button>
+            </div>
+
+            <div class="column">
+                <h2>非フォーム版</h2>
+                <div class="form-section">
+                    <label>編集可能テキスト</label>
+                    <div id="editableDiv" class="editable" contenteditable="true" data-placeholder="入力してください"></div>
+                    <div class="status" id="editableStatus">⚠️ 未保存の入力があります</div>
+                </div>
+                <button class="reset-btn" onclick="resetEditable()">リセット</button>
+            </div>
+        </div>
+
+        <div class="links-section">
+            <div class="links">
+                <a href="./page1.html" class="protected-link">ページ1</a>
+                <a href="./page2.html" class="protected-link">ページ2</a>
+                <a href="./about.html" class="protected-link">About</a>
+                <a href="./contact.html" class="protected-link">Contact</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 入力があるかどうかを追跡
+        let hasUnsavedInput = false;
+
+        // input要素とtextarea要素、編集可能要素を取得
+        const formInput = document.getElementById('formInput');
+        const editableDiv = document.getElementById('editableDiv');
+        const formStatus = document.getElementById('formStatus');
+        const editableStatus = document.getElementById('editableStatus');
+
+        // 入力イベントのリスナー
+        function handleInput() {
+            hasUnsavedInput = formInput.value.trim() !== '' || 
+                             editableDiv.textContent.trim() !== '';
+            updateStatus();
+        }
+
+        // ステータス表示の更新
+        function updateStatus() {
+            if (formInput.value.trim() !== '') {
+                formStatus.classList.add('active');
+            } else {
+                formStatus.classList.remove('active');
+            }
+
+            if (editableDiv.textContent.trim() !== '') {
+                editableStatus.classList.add('active');
+            } else {
+                editableStatus.classList.remove('active');
+            }
+        }
+
+        // 入力イベントをリッスン
+        formInput.addEventListener('input', handleInput);
+        editableDiv.addEventListener('input', handleInput);
+
+        // フォームリセット関数
+        function resetForm() {
+            formInput.value = '';
+            hasUnsavedInput = editableDiv.textContent.trim() !== '';
+            updateStatus();
+        }
+
+        // 編集可能テキストリセット関数
+        function resetEditable() {
+            editableDiv.textContent = '';
+            hasUnsavedInput = formInput.value.trim() !== '';
+            updateStatus();
+        }
+
+        // ページ離脱時の警告（リンククリック、タブを閉じる、戻るボタンなど）
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedInput) {
+                // ブラウザ標準の確認ダイアログが表示される
+                // （Chromeでは「このサイトを離れますか？」というダイアログ）
+                e.preventDefault();
+                e.returnValue = ''; // Chrome用に必要
+                return ''; // 一部の古いブラウザ用
+            }
+        });
+    </script>
+</body>
+</html>
